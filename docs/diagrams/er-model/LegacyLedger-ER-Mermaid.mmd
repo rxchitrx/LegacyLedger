@@ -1,0 +1,155 @@
+erDiagram
+    direction LR
+    ACCOUNT {
+        id account_id PK
+        text role
+    }
+    PERSON {
+        id person_id PK
+        id account_id FK "optional and unique"
+        text display_name
+    }
+    ESTATE_PROFILE {
+        id estate_id PK
+        id owner_person_id FK "unique"
+        text status
+    }
+    INSTITUTION {
+        id institution_id PK
+        text name
+    }
+    ASSET {
+        id asset_id PK
+        id estate_id FK
+        id institution_id FK
+        text asset_type
+    }
+    DESIGNATION {
+        id asset_id PK,FK
+        id claimant_person_id PK,FK
+        text claim_route
+    }
+    OWNERSHIP_SHARE {
+        id asset_id PK,FK
+        id person_id PK,FK
+        decimal ownership_share
+    }
+    NOMINATION {
+        id asset_id PK,FK
+        id nominee_person_id PK,FK
+        id appointee_person_id FK "optional generally; required for minors"
+        decimal allocation_pct
+        boolean is_minor
+    }
+    DOCUMENT {
+        id document_id PK
+        id uploader_person_id FK
+        text document_type
+    }
+    DOCUMENT_ASSET {
+        id document_id PK,FK
+        id asset_id PK,FK
+    }
+    RELEASE_REQUEST {
+        id request_id PK
+        id claimant_person_id FK
+        id estate_id FK
+        id certificate_document_id FK
+        text status
+        text certificate_check_outcome "latest basic check"
+        timestamp veto_started_at "nullable before a passing check"
+        timestamp veto_deadline_at "nullable before a passing check"
+    }
+    NOTIFICATION {
+        id notification_id PK
+        id request_id FK
+        text channel
+        text status
+    }
+    ASSET_RELEASE_NOTICE {
+        id notice_id PK
+        id request_id FK
+        id asset_id FK
+        text outcome
+    }
+    WORKFLOW {
+        id workflow_id PK
+        id notice_id FK
+        id rule_id FK
+        text status
+    }
+    WORKFLOW_PERMISSION {
+        id workflow_id PK,FK
+        id claimant_person_id PK,FK
+        text access_mode
+    }
+    PROCESS_RULE {
+        id rule_id PK
+        text version
+    }
+    GUIDANCE_SOURCE {
+        id source_id PK
+        text version
+    }
+    RULE_SOURCE {
+        id rule_id PK,FK
+        id source_id PK,FK
+    }
+    RULE_REQUIREMENT {
+        id requirement_id PK
+        id rule_id FK
+        boolean required
+        text waiver
+    }
+    CHECKLIST_ITEM {
+        id item_id PK
+        id workflow_id FK
+        id requirement_id FK
+        text status
+    }
+    CORRECTION {
+        id correction_id PK
+        id workflow_id FK
+        id claimant_person_id FK
+        boolean unverified
+    }
+    AUDIT_EVENT {
+        id event_id PK
+        text action
+        timestamp occurred_at
+        id actor_ref "pseudonymous; null for system actions"
+        text target_type
+        id target_ref "polymorphic"
+    }
+
+    ACCOUNT o|..|| PERSON : links
+    PERSON ||..|| ESTATE_PROFILE : owns
+    ESTATE_PROFILE ||..o{ ASSET : contains
+    INSTITUTION ||..o{ ASSET : holds
+    ASSET ||--o{ DESIGNATION : has_designation
+    PERSON ||--o{ DESIGNATION : is_designated_claimant
+    ASSET ||--o{ OWNERSHIP_SHARE : has_share
+    PERSON ||--o{ OWNERSHIP_SHARE : holds_share
+    ASSET ||--o{ NOMINATION : has_nomination
+    PERSON ||--o{ NOMINATION : is_nominee
+    PERSON o|..o{ NOMINATION : is_appointee
+    PERSON ||..o{ DOCUMENT : uploads
+    DOCUMENT ||--o{ DOCUMENT_ASSET : covers_via
+    ASSET ||--o{ DOCUMENT_ASSET : has_document
+    PERSON ||..o{ RELEASE_REQUEST : files
+    ESTATE_PROFILE ||..o{ RELEASE_REQUEST : is_subject_of
+    DOCUMENT ||..o{ RELEASE_REQUEST : serves_as_certificate
+    RELEASE_REQUEST ||..o{ NOTIFICATION : triggers
+    RELEASE_REQUEST ||..o{ ASSET_RELEASE_NOTICE : produces
+    ASSET ||..o{ ASSET_RELEASE_NOTICE : is_named_on
+    ASSET_RELEASE_NOTICE ||..o{ WORKFLOW : creates
+    WORKFLOW ||--o{ WORKFLOW_PERMISSION : grants_access_via
+    PERSON ||--o{ WORKFLOW_PERMISSION : receives_access
+    PROCESS_RULE ||..o{ WORKFLOW : governs
+    PROCESS_RULE ||--o{ RULE_SOURCE : cites_via
+    GUIDANCE_SOURCE ||--o{ RULE_SOURCE : supports
+    PROCESS_RULE ||..o{ RULE_REQUIREMENT : defines
+    WORKFLOW ||..o{ CHECKLIST_ITEM : contains
+    RULE_REQUIREMENT ||..o{ CHECKLIST_ITEM : generates
+    WORKFLOW ||..o{ CORRECTION : receives
+    PERSON ||..o{ CORRECTION : submits
