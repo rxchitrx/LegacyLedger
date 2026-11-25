@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: legacyledger-postgres
+    environment:
+      POSTGRES_USER: legacy
+      POSTGRES_PASSWORD: legacy_dev_password
+      POSTGRES_DB: legacyledger
+    ports:
+      - "5432:5432"
+    volumes:
+     - pgdata:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:7
+    container_name: legacyledger-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  pgdata:
+  mongodata:
